@@ -2,9 +2,47 @@ from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.optimizers import Adam
 import tensorflow as tf
 import cv2
-import train
+from tensorflow.keras.layers import Dense
+from tensorflow.keras import layers
+from tensorflow.keras.applications import DenseNet201, InceptionV3
 import argparse
 import numpy as np
+
+def build_model(model_name):
+    
+    """ 
+    Description - Builds the required model
+    :type model_name: str
+    :param model_name: Name of model to be built
+
+    :rtype: tensorflow model
+    """
+    if(model_name == "densenet"):
+        base_model = DenseNet201(
+            weights='imagenet',
+            include_top=False,
+            input_shape=(224,224,3))
+
+    elif(model_name == "inception"):
+        base_model = InceptionV3(
+            weights='imagenet',
+            include_top=False,
+            input_shape=(224,224,3))
+    
+    x = base_model.output
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Dropout(0.5)(x)
+    x = layers.BatchNormalization()(x)
+    pred_layer = layers.Dense(2, activation='softmax')(x)
+    model = Model(inputs=base_model.input, outputs=pred_layer)
+
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer=Adam(lr=1e-5),
+        metrics=['accuracy']
+    )
+
+    return model
 
 def main(args):
     """ 
